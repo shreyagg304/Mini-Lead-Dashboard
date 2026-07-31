@@ -1,346 +1,213 @@
-High-Level Design — Mini Leads Dashboard 
+# High-Level Design — Mini Leads Dashboard
+
+---
+
+## 1. Metadata
+
+| Field | Value |
+|---|---|
+| Project name | Mini Leads Dashboard |
+| Author | Shreya Aggarwal |
+| Date | 2026-07-29 |
+| Reviewers | Sameer Singh |
+| Status | Draft |
+| Related docs | PRD v1.0 · LLD v0.1 |
 
-1. Metadata 
+---
 
-Field 
+## 2. Purpose
 
-Value 
+The Mini Leads Dashboard is a lightweight CRM application designed for small sales teams to manage their leads efficiently. It allows sales agents to view all leads in a searchable and filterable table, access detailed information about individual leads, create new leads, and delete duplicate or invalid entries with confirmation. It is intended as a lightweight CRM dashboard and does not include authentication, multi-tenancy, or other advanced CRM features.
 
-Project name 
+---
 
-Mini Leads Dashboard 
+## 3. Context Diagram
 
-Author 
+```text
+              ┌────────────────────────┐
+              │      Sales Agent       │
+              │    (Chrome Browser)    │
+              └───────────┬────────────┘
+                          │ HTTP + JSON
+                          ▼
+┌──────────────────────────────────────────────────────┐
+│             Leadboard SPA (React)                    │
+│ React Router · MUI · TanStack Query · axios          │
+└───────────────────────┬──────────────────────────────┘
+                        │ REST API
+                        ▼
+              ┌────────────────────────┐
+              │      json-server        │
+              │       (db.json)         │
+              └───────────┬────────────┘
+                          │
+                          ▼
+                    Lead Data (JSON)
+```
 
-Shreya Aggarwal 
+### Boundary Notes
 
-Date 
+- **Sales Agent** – Person who uses the application to manage leads.
+- **Browser** – Where the user interacts with the React application.
+- **HTTP + JSON** – Used by the frontend to communicate with the backend.
+- **Leadboard SPA** – Main React application.
+- **React Router** – Handles navigation between pages.
+- **MUI** – Provides UI components.
+- **TanStack Query** – Fetches, caches, and manages server data.
+- **axios** – Sends HTTP requests.
+- **json-server** – Mock backend storing lead data in `db.json`.
 
-2026-07-29 
+---
 
-Reviewers 
+## 4. Top-Level Component Groups
 
-Sameer Singh 
+| # | Group | What lives here |
+|---|---|---|
+| 1 | App Shell | Router, ThemeProvider, QueryClientProvider, global layout |
+| 2 | Leads List Page | Lead table, search, status filter, sorting, pagination, page-level state |
+| 3 | Lead Detail Page | Lead details, activity history, delete confirmation dialog |
+| 4 | Create Lead Form | Input fields, validation, submit handler |
+| 5 | Data Layer | axios configuration, TanStack Query hooks, API calls, query keys |
+| 6 | Shared UI | LoadingState, ErrorState, EmptyState, ConfirmDialog, reusable MUI components |
 
-Status 
+---
 
-Draft 
+## 5. External Interfaces
 
-Related docs 
+### 5.1 Mock Backend
 
-PRD 
+| Field | Value |
+|---|---|
+| Chosen backend | json-server |
+| Base URL | `http://localhost:4000` |
+| Data shape summary | `leads` array containing the fields defined in the PRD |
 
- 
+### 5.2 Endpoints
 
-2. Purpose 
+| Endpoint | Method | Purpose | Query Params |
+|---|---|---|---|
+| `/leads` | GET | List leads | `_page`, `_limit`, `_sort`, `_order`, `q`, `status` |
+| `/leads/:id` | GET | Lead details | |
+| `/leads` | POST | Create lead | |
+| `/leads/:id` | DELETE | Delete lead | |
+| `/leads/:id` | PATCH | Edit lead (Stretch) | |
 
-The Mini Leads Dashboard is a lightweight CRM application designed for small sales teams to manage their leads efficiently. It allows sales agents to view all leads in a searchable and filterable table, access detailed information about individual leads, create new leads, and delete duplicate or invalid entries with confirmation. The application focuses on providing a simple, responsive, and user-friendly interface. 
+### 5.3 Anything Else
 
-3. Context diagram 
+N/A
 
-Sales Agent 
-(Chrome Browser) 
+---
 
-↓ 
-HTTP + JSON 
-↓ 
+## 6. Key Architectural Decisions
 
-Leadboard SPA (React) 
-React Router │ MUI │ TanStack Query │ axios 
+### KAD-01 — Backend Choice (OQ-01)
 
-↓ 
-REST API Request 
-↓ 
+**Decision:** Use json-server locally.
 
-json-server 
-(db.json) 
+**Why:** Easy to set up, works offline, and behaves like a REST backend.
 
-↓ 
+**Trade-off:** React app and json-server must run separately.
 
-Lead Data 
-(JSON) 
+---
 
-Sales Agent – Person who uses the application to manage leads. 
+### KAD-02 — Form State (OQ-02)
 
-Browser – Where the user interacts with the React application. 
+**Decision:** Use React `useState`.
 
-HTTP + JSON – Used by the frontend to communicate with the backend and exchange data in JSON format. 
+**Why:** The form is small and simple.
 
-Leadboard SPA (React) – The main frontend application where users can view, search, create, and manage leads. 
+**Trade-off:** Larger forms may become difficult to manage.
 
-React Router – Handles navigation between pages (Leads List, Lead Detail, Create Lead).  
+---
 
-MUI – Provides the user interface components.  
+### KAD-03 — Cache Policy (OQ-04)
 
-TanStack Query – Fetches, caches, and manages server data.  
+**Decision:** Use TanStack Query's default caching.
 
-axios – Sends API requests to the backend.  
+**Why:** Reduces unnecessary API requests.
 
-json-server – A mock backend that stores lead data in a local db.json file and exposes REST APIs. 
+**Trade-off:** Cached data may require invalidation or refetching to stay up to date.
 
-4. Top-level component groups 
+---
 
-# 
+### KAD-04 — Post-create Refresh (OQ-05)
 
-Group 
+**Decision:** Refresh the leads list after creating a lead.
 
-What lives here 
+**Why:** Newly created leads become visible immediately.
 
-1 
+**Trade-off:** Requires an additional API request.
 
-App shell 
+---
 
-Router, Theme Provider, QueryClient Provider, global layout 
+### KAD-05 — Component Library
 
-2 
+**Decision:** Use Material UI.
 
-Leads list page 
+**Why:** Provides ready-made, accessible components and speeds up development.
 
-Lead table, search, status filter, sorting, pagination, page-level state 
+**Trade-off:** Less flexibility compared to building everything from scratch.
 
-3 
+---
 
-Lead detail page 
+## 7. Cross-cutting Concerns
 
-Lead information, activity history, delete confirmation dialog 
+| Concern | How you're handling it |
+|---|---|
+| Loading / Error / Empty States | Show dedicated UI for each state. |
+| Debounced Input | Delay search requests by ~300 ms. |
+| Global Error Handling | Display user-friendly error messages for failed API requests. |
+| Toast / Notification Pattern | Show success and error notifications after actions. |
+| Confirm-before-delete Pattern | Display a confirmation dialog before deletion. |
+| Responsive Layout Strategy | Use Material UI responsive components and layouts. |
+| Accessibility Baseline | Use semantic HTML, labels, and keyboard-accessible controls. |
+| Dark Mode | N/A |
+| URL-persisted State | N/A |
 
-4 
+---
 
-Create-lead form 
+## 8. Risks + Mitigations
 
-Input fields, validation, submit handler 
+| # | Risk | Likelihood | Impact | Mitigation |
+|---|---|---|---|---|
+| 1 | First time using TanStack Query. | High | Medium | Read documentation and practice with small examples. |
+| 2 | Combining search, filtering, and pagination. | Medium | Medium | Build and test one feature at a time. |
+| 3 | Using multiple new technologies together. | High | High | Follow the project structure and clarify doubts early. |
 
-5 
+---
 
-Data layer 
+## 9. Alternatives Considered
 
-axios configuration, TanStack Query hooks, API calls, query keys 
+### Alternative to KAD-01
 
-6 
+**Considered:** mockapi.io
 
-Shared UI 
+**Why rejected:** Requires an online service; json-server works locally and is easier to reset.
 
-LoadingState, ErrorState, EmptyState, ConfirmDialog, reusable MUI components  
+---
 
- 
+### Alternative to KAD-05
 
-5. External interfaces 
+**Considered:** Tailwind CSS
 
-5.1 Mock backend 
+**Why rejected:** Material UI is part of the project stack and provides ready-made components for faster development.
 
-Field 
+---
 
-Value 
+## 10. Out-of-Scope Confirmation
 
-Chosen backend 
+> I confirm I am **not** building authentication, multi-tenancy, real-time updates, outbound messaging, reports/charts, CSV import/export, deals/opportunities, or deployment. If any of these creep into my design, I will stop and re-scope before continuing.
 
-json-server  
+**Signed / Date:** Shreya Aggarwal — 2026-07-29
 
-Base URL 
+---
 
-http://localhost:4000 
+## 11. Review Sign-off
 
-Data shape summary 
+| Reviewer | Date | Verdict | Comments |
+|---|---|---|---|
+| Sameer Singh | | Approved / Revise / Reject | |
 
-Leads stored as a JSON array containing the fields defined in the PRD. 
+---
 
-5.2 Endpoints 
-
-Endpoint 
-
-Method 
-
-Purpose 
-
-/leads 
-
-GET 
-
-list 
-
-/leads/:id 
-
-GET 
-
-detail 
-
-/leads 
-
-POST 
-
-create 
-
-/leads/:id 
-
-DELETE 
-
-delete 
-
- 
-
-6. Key architectural decisions  
-
-KAD-01 Backend 
-
-Decision - I will use json-server as the backend. 
-
-Why - It is easy to set up, works locally, and behaves like a real backend. 
-
-Trade-off - I have to run both the React app and the json-server separately. 
-
-KAD-02 Form State 
-
-Decision - I will use React's useState to manage the form. 
-
-Why - The form is small, so useState is simple and enough for this project. 
-
-Trade-off - If the form becomes much larger, managing it with only useState could become difficult. 
-
-KAD-03 Cache 
-
-Decision - I will use the default caching provided by TanStack Query. 
-
-Why - It reduces unnecessary API requests and is the recommended approach. 
-
-Trade-off - I still need to learn how the cache works. 
-
-KAD-04 Refresh 
-
-Decision - After creating a lead, I will refresh the leads list. 
-
-Why - So, the newly created lead is visible immediately. 
-
-Trade-off - Refreshing the list means making another API request. 
-
-KAD-05 UI Library 
-
-Decision - I will use Material UI for the interface. 
-
-Why - It provides ready-made components and helps me build the UI faster. 
-
-Trade-off - It gives me less freedom to customize compared to writing every component from scratch. 
-
-7. Cross-cutting concerns 
-
-Concern 
-
-How you're handling it 
-
-Loading / error / empty states 
-
-Show separate loading, error, and empty state UI to keep users informed. 
-
-Debounced input 
-
-Delay the search request by around 300 ms to avoid sending a request on every keystroke. 
-
-Global error handling 
-
-Display a user-friendly error message when an API request fails. 
-
-Toast / notification pattern 
-
-Show a success message after creating or deleting a lead and an error message if an action fails. 
-
-Confirm-before-delete pattern 
-
-Show a confirmation dialog before permanently deleting a lead. 
-
-Responsive layout strategy 
-
-Use Material UI's responsive components so the application works on desktop and mobile screens. 
-
-Accessibility baseline 
-
-Use semantic HTML, proper labels for inputs, and ensure keyboard accessibility. 
-
- 
-
-8. Risks + mitigations 
-
- 
-
-# 
-
-Risk 
-
-Likelihood 
-
-Impact 
-
-Mitigation 
-
-1 
-
-First time using TanStack Query for data fetching and caching. 
-
-High 
-
-Med 
-
-Read the documentation, practice with small examples, and ask for help if blocked. 
-
-2 
-
-Implementing search, pagination, and filtering together may be confusing. 
-
-Med 
-
-Med 
-
-Build one feature at a time and test each before moving to the next. 
-
-3 
-
-Integrating multiple technologies (React, MUI, axios, React Router, TanStack Query) for the first time. 
-
-High 
-
-High 
-
-Follow the project structure, understand each technology's role, and ask questions when needed. 
-
- 
-
-9. Alternatives considered 
-
-Alternative to KAD-01 
-
-Considered: mockapi.io  
-
-Why rejected: Requires an online service, while json-server runs locally and is easier to manage during development.  
-
-Alternative to KAD-05 
-
-Considered: Tailwind CSS  
-
-Why rejected: Material UI provides ready-made components and is already part of the project requirements, so it helps build the interface faster. 
-
- 
-
-10. Out of scope confirmation 
-
- 
-
-I confirm I am not building : authentication, multi-tenancy, real-time updates, outbound messaging, reports / charts, CSV import / export, deals / opportunities, or deployment. If any of these creep into my design, I will stop and re-scope before continuing. 
-
-11. Review sign-off 
-
- 
-
-Reviewer 
-
-Date 
-
-Verdict 
-
-Comments 
-
-Sameer Singh 
-
- 
-
-Approved / Revise / Reject 
-
- 
-
+**End of HLD**

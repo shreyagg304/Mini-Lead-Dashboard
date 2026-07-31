@@ -1,837 +1,701 @@
-Low-Level Design — Mini Leads Dashboard 
+# Low-Level Design — Mini Leads Dashboard
+
+---
+
+## 1. Metadata
+
+| Field | Value |
+|---|---|
+| Project | Mini Leads Dashboard |
+| Author | Shreya Aggarwal |
+| Date | 2026-07-29 |
+| HLD Reference | v1.0 |
+| Reviewers | Sameer Singh |
+| Status | Draft |
+
+---
+
+## 2. Data Model
+
+The **Lead** object represents the data stored in the mock backend (`json-server`) and used throughout the application.
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `id` | number | Yes (Backend assigned) | Primary key |
+| `first_name` | string | Yes | 1–64 characters |
+| `last_name` | string | Yes | 1–64 characters |
+| `email` | string | Yes | Valid email address |
+| `phone` | string | Yes | Normalized digits with optional leading `+` |
+| `status` | enum | Yes | `New` \| `Contacted` \| `Qualified` \| `Won` \| `Lost` |
+| `owner` | string | Yes | Lead owner |
+| `source` | enum | No | `Website` \| `Referral` \| `Ad campaign` \| `Cold call` \| `Other` |
+| `created_on` | string (ISO Date) | Yes (Backend assigned) | `YYYY-MM-DD` |
+
+### Lead Status
+
+```ts
+export const LEAD_STATUSES = [
+  "New",
+  "Contacted",
+  "Qualified",
+  "Won",
+  "Lost",
+];
+```
+
+No additional derived fields are planned for this project.
+
+---
+
+## 3. Route Table
+
+Routes are ordered with **static routes before dynamic routes** so that `/leads/new` is matched correctly.
+
+| # | Path | Element / Page | Loader / Guard | Notes |
+|---|---|---|---|---|
+| 1 | `/` | `<Navigate to="/leads" />` | — | Root redirect |
+| 2 | `/leads` | `<LeadsListPage />` | — | F-01 – F-08 |
+| 3 | `/leads/new` | `<CreateLeadPage />` | — | F-12 – F-17 |
+| 4 | `/leads/:id` | `<LeadDetailPage />` | — | F-09 – F-11 |
+| 5 | `*` | `<NotFoundPage />` | — | Catch-all route |
+
+---
+
+## 4. Component Tree
+
+```text
+<App>                                   # Root component
+│
+├── <AppProviders>                      # Wraps the application with global providers
+│   ├── ThemeProvider                   # Material UI Theme
+│   ├── QueryClientProvider             # TanStack Query
+│   └── BrowserRouter                   # React Router
+│
+├── <AppLayout>                         # Shared layout
+│   ├── <TopBar />                      # Application title / navigation
+│   └── <Outlet />                      # Renders current route
+│
+├── <LeadsListPage />                   # Main dashboard
+│   ├── <PageHeader />                  # "Leads" + New Lead button
+│   ├── <FiltersBar />                  # Search + Status filter
+│   │   ├── <SearchInput />             # Debounced search
+│   │   └── <StatusFilterSelect />      # Status dropdown
+│   │
+│   ├── <LeadsTable />                  # MUI DataGrid
+│   │   ├── <DataGrid />                # Displays leads
+│   │   └── <StatusChip />              # Status → colored chip
+│   │
+│   ├── <PaginationBar />               # Page controls
+│   │
+│   └── <DataState />                   # Chooses what to display
+│       ├── <LoadingSkeleton />         # Loading state
+│       ├── <Alert severity="error" />  # Error state
+│       ├── <EmptyPanel />              # Empty state
+│       └── <LeadsTable />              # Success state
+│
+├── <LeadDetailPage />                  # Lead details
+│   ├── <PageHeader />                  # Lead name + Delete button
+│   ├── <LeadFields />                  # Displays lead information
+│   ├── <ActivityFeed />                # Mock activity history
+│   └── <ConfirmDeleteDialog />         # Delete confirmation
+│
+└── <CreateLeadPage />                  # Create new lead
+    ├── <PageHeader />                  # "New Lead"
+    ├── <LeadForm />                    # Controlled form
+    │   ├── <TextField /> × 5           # Name, Email, Phone, Owner...
+    │   ├── <SelectField /> × 2         # Status, Source
+    │   └── <FormActions />             # Submit + Cancel
+    │
+    └── <Alert severity="error" />      # Submission error
+```
 
-1. Metadata 
+### Shared Components (`src/components/`)
 
-Field 
+| Component | Purpose |
+|---|---|
+| `PageHeader` | Reusable page header with title and actions |
+| `StatusChip` | Displays lead status using MUI Chip |
+| `ConfirmDialog` | Generic confirmation dialog |
+| `DataState` | Decides whether to render Loading, Error, Empty, or Success UI |
+| `LoadingSkeleton` | Skeleton loader while data is loading |
+| `EmptyPanel` | Empty state message |
+| `ErrorPanel` | Displays API errors with retry option |
+| `NotFoundPage` | 404 page |
 
-Value 
+---
 
-Project 
+# 5. Per-Component Contract
 
-Mini Leads Dashboard 
+## 5.1 `<LeadsListPage />`
 
-Author 
+### Props
 
-Shreya Aggarwal 
+None (Route component rendered by React Router).
 
-Date 
+### Local State
 
-2026-07-29 
+```ts
+{
+  page: number,                    // Current page number
+  pageSize: 10 | 25 | 50,          // Rows per page
+  searchInput: string,             // User input
+  search: string,                  // Debounced search value
+  statusFilter: LeadStatus | "ALL",
+  pendingDelete: Lead | null       // Lead selected for deletion
+}
+```
 
-HLD reference 
+### Data Hooks
 
-v1.0 
+- `useLeadsList()`
+- `useDeleteLead()`
 
-Reviewers 
+### Side Effects
 
-Sameer Singh 
+- Debounce the search input using `useEffect()` with a 300 ms delay.
+- Refresh the lead list after successfully deleting a lead.
 
-Status 
+### Rendering States
 
-Draft 
+| State | Component |
+|---|---|
+| Loading | `LoadingSkeleton` |
+| Error | `DataState` with error message |
+| Empty | `EmptyPanel` |
+| Success | `LeadsTable` |
 
- 
+---
 
-2. Data model 
+## 5.2 `<LeadDetailPage />`
 
-Field 
+### Props
 
-Type 
+None (Reads the lead id using `useParams()`).
 
-Required 
+### Local State
 
-Notes 
+```ts
+{
+  confirmDelete: boolean
+}
+```
 
-id 
+### Data Hooks
 
-number 
+- `useLead(id)`
+- `useDeleteLead()`
 
-Y (BE-assigned) 
+### Side Effects
 
-primary key 
+- Fetch lead details when the page loads.
+- Navigate back to the Leads List after successful deletion.
 
-first_name 
+### Rendering States
 
-string 
+| State | Component |
+|---|---|
+| Loading | `LoadingSkeleton` |
+| Error | `ErrorPanel` |
+| Lead Not Found | `NotFoundPage` |
+| Success | `LeadFields` + `ActivityFeed` |
 
-Y 
+---
 
-1 – 64 chars 
+## 5.3 `<CreateLeadPage />`
 
-last_name 
+### Props
 
-string 
+None.
 
-Y 
+### Local State
 
-1 – 64 chars 
+```ts
+{
+  values: {
+    first_name: "",
+    last_name: "",
+    email: "",
+    phone: "",
+    status: "New",
+    owner: "",
+    source: ""
+  },
 
-email 
+  errors: {},
 
-string 
+  submitError: null
+}
+```
 
-Y 
+### Data Hooks
 
-valid email 
+- `useCreateLead()`
 
-phone 
+### Side Effects
 
-string 
+- Focus the first input field when the page loads.
+- Navigate back to the Leads List after successful creation.
+- Display a success notification after creating a lead.
 
-Y 
+### Validation
 
-normalised — digits + optional leading + 
+Validation checks:
 
-status 
+- Required fields
+- Valid email
+- Valid phone number
+- Valid status selection
+- Required owner
 
-enum 
+Validation runs before submitting the form.
 
-Y 
+---
 
-New | Contacted | Qualified | Won | Lost 
+## 5.4 `<LeadForm />`
 
-owner 
+### Decision
 
-string 
+Create a separate `LeadForm` component.
 
-Y 
+### Why?
 
- 
+- Keeps `CreateLeadPage` clean.
+- Makes the form reusable for the future Edit Lead page.
+- Avoids duplicating form fields.
 
-source 
+---
 
-enum? 
+## 5.5 `<ConfirmDialog />`
 
-N 
+### Props
 
-Website | Referral | Ad campaign | Cold call | Other 
+```ts
+{
+  open: boolean,
+  title: string,
+  description?: string,
+  confirmLabel?: string,
+  cancelLabel?: string,
+  destructive?: boolean,
+  loading?: boolean,
+  onConfirm: () => void,
+  onClose: () => void
+}
+```
 
-created_on 
+### Behaviour
 
-string (ISO date) 
+- Opens before deleting a lead.
+- Clicking **Cancel** closes the dialog.
+- Clicking **Confirm** deletes the lead.
+- Buttons remain disabled while the delete request is in progress.
+- Clicking outside the dialog or pressing **Esc** closes it unless `loading` is `true`.
 
-Y (BE-assigned) 
+---
 
-YYYY-MM-DD 
+# 6. Data Fetching Plan
 
- 
+## 6.1 Query — `useLeadsList(params)`
 
-3. Route table 
+**File**
 
-# 
+```text
+src/features/leads/useLeads.ts
+```
 
-Path 
+### Query Key
 
-Element / Page 
+```ts
+leadsKeys.list(params)
+// ['leads', 'list', params]
+```
 
-Notes 
+### Fetcher
 
-1 
+```text
+fetchLeadsList(params)
+```
 
-/ 
+- Sends `GET /leads`
+- Builds the required query parameters
+- Returns:
 
-<Navigate to="/leads" /> 
+```ts
+{
+  rows,
+  total
+}
+```
 
-root redirect 
+### Query Options
 
-2 
+| Option | Value |
+|---|---|
+| staleTime | 30 seconds |
+| keepPreviousData | true |
+| refetchOnWindowFocus | false |
 
-/leads 
+### Used By
 
-<LeadsListPage /> 
+- `LeadsListPage`
 
-F-01 – F-08 
+## 6.2 Query — `useLead(id)`
 
-3 
+**Query Key**
 
-/leads/new 
+```ts
+leadsKeys.detail(id)
+// ['leads', 'detail', String(id)]
+```
 
-<CreateLeadPage /> 
+### Fetcher
 
-F-12 – F-17; must be above /leads/:id 
+```text
+fetchLead(id)
+```
 
-4 
+- Sends `GET /leads/:id`
+- Returns a single Lead object
+- Throws an error if the lead is not found
 
-/leads/:id 
+### Query Options
 
-<LeadDetailPage /> 
+| Option | Value |
+|---|---|
+| enabled | !!id |
+| staleTime | 60 seconds |
 
-F-09 – F-11 
+### Used By
 
-5 
+- `LeadDetailPage`
 
-* 
+## 6.3 Mutation — `useCreateLead()`
 
-<NotFoundPage /> 
+### Mutation
 
-catch-all 
+```text
+POST /leads
+```
 
- 
+### On Success
 
-4. Component tree 
+- Invalidate the Leads List query
+- Navigate back to the Leads List page
+- Display a success notification
 
-<App>                                   # Root component 
+### On Error
 
-│ 
+- Return the error to the page
+- Display the submission error without clearing the form
 
-├── <AppProviders>                      # Wraps the app with global providers 
+### Used By
 
-│   ├── ThemeProvider                   # MUI Theme 
+- `CreateLeadPage`
 
-│   ├── QueryClientProvider             # TanStack Query 
+## 6.4 Mutation — `useDeleteLead()`
 
-│   └── BrowserRouter                   # React Router 
+### Mutation
 
-│ 
+```text
+DELETE /leads/:id
+```
 
-├── <AppLayout>                         # Common layout for all pages 
+### On Success
 
-│   ├── <TopBar />                      # App title / navigation 
+- Refresh the Leads List query
+- Remove the deleted Lead Detail query from cache
+- Navigate back to the Leads List page (when deleting from the Detail page)
 
-│   └── <Outlet />                      # Renders the current route 
+### Used By
 
-│ 
+- `LeadsListPage`
+- `LeadDetailPage`
 
-├── <LeadsListPage />                   # Main dashboard 
+## 6.5 Query Key Factory
 
-│   ├── <PageHeader />                  # "Leads" + New Lead button 
+```ts
+export const leadsKeys = {
+  all: ['leads'],
+  lists: () => ['leads', 'list'],
+  list: (params) => ['leads', 'list', params'],
 
-│   ├── <FiltersBar />                  # Search + Status filter 
+  details: () => ['leads', 'detail'],
+  detail: (id) => ['leads', 'detail', String(id)],
+}
+```
 
-│   │   ├── <SearchInput />             # Debounced search input 
+### Cache Invalidation
 
-│   │   └── <StatusFilterSelect />      # Filter by status 
+| Mutation | Invalidates |
+|---|---|
+| Create Lead | `leadsKeys.lists()` |
+| Delete Lead | `leadsKeys.lists()` + `leadsKeys.detail(id)` |
+| Edit Lead (Stretch) | `leadsKeys.lists()` + `leadsKeys.detail(id)` |
 
-│   │ 
+---
 
-│   ├── <LeadsTable />                  # MUI DataGrid 
+# 7. Global State
 
-│   │   ├── <DataGrid />                # Displays all leads 
+The application keeps global state minimal.
 
-│   │   └── <StatusChip />              # Status → coloured chip 
+## URL / Router State
 
-│   │ 
+- Route parameter (`:id`) for the Lead Detail page.
+- Page number and filters may be stored in the URL (Stretch Goal).
 
-│   ├── <PaginationBar />               # Previous / Next + page size 
+## TanStack Query Cache
 
-│   │ 
+Stores server state.
 
-│   └── <DataState />                   # Decides what to render 
+- Leads List
+- Individual Lead Details
 
-│       ├── <LoadingSkeleton />         # While fetching data 
+## Local Component State
 
-│       ├── <Alert severity="error" /> # API error 
+Managed using `useState()`.
 
-│       ├── <EmptyPanel />              # No leads / No search results 
+Examples:
 
-│       └── <LeadsTable />              # Success state 
+- Search input
+- Status filter
+- Pagination
+- Form values
+- Delete confirmation dialog
+- Temporary UI state
 
-│ 
+## Redux / Zustand / Context
 
-├── <LeadDetailPage />                  # View a single lead 
+Not used.
 
-│   ├── <PageHeader />                  # Lead name + Delete button 
+### Justification
 
-│   ├── <LeadFields />                  # Lead information 
+The application is small enough that:
 
-│   ├── <ActivityFeed />                # Mock activity history 
+- Server state is managed by TanStack Query.
+- UI state is managed locally using React state.
 
-│   └── <ConfirmDeleteDialog />         # Delete confirmation 
+No additional global state library is required.
 
-│ 
+---
 
-└── <CreateLeadPage />                  # Create a new lead 
+# 8. Form Validation Rules
 
-    ├── <PageHeader />                  # "New Lead" 
+Validation is performed before submitting the form.
 
-    ├── <LeadForm />                    # Controlled form 
+```ts
+export function validateLead(values) {
+  const errors = {};
 
-    │   ├── <TextField /> × 5           # Name, Email, Phone, Owner... 
+  if (!values.first_name?.trim())
+    errors.first_name = "First name is required";
+  else if (values.first_name.length > 64)
+    errors.first_name = "Max 64 characters";
 
-    │   ├── <SelectField /> × 2         # Status, Source 
+  if (!values.last_name?.trim())
+    errors.last_name = "Last name is required";
+  else if (values.last_name.length > 64)
+    errors.last_name = "Max 64 characters";
 
-    │   └── <FormActions />             # Submit + Cancel buttons 
+  if (!values.email?.trim())
+    errors.email = "Email is required";
+  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email))
+    errors.email = "Enter a valid email";
 
-    │ 
+  const digits = String(values.phone || "").replace(/[+\s-]/g, "");
 
-    └── <Alert severity="error" />      # Show submit error (only if creation fails) 
+  if (!digits)
+    errors.phone = "Phone is required";
+  else if (!/^\d{7,15}$/.test(digits))
+    errors.phone = "Phone must be 7–15 digits";
 
- 
+  if (!LEAD_STATUSES.includes(values.status))
+    errors.status = "Pick a status";
 
-Shared Components (src/components/) 
+  if (!values.owner?.trim())
+    errors.owner = "Owner is required";
 
-│ 
+  return errors;
+}
+```
 
-├── <PageHeader />                      # Reused on multiple pages 
+---
 
-├── <StatusChip />                      # Displays lead status 
+### Phone Normalizer
 
-├── <ConfirmDialog />                   # Generic confirmation dialog 
+```ts
+export function normalisePhone(input) {
+  if (!input) return "";
 
-├── <DataState />                       # Loading / Error / Empty wrapper 
+  const cleaned = input.replace(/[\s-]/g, "");
 
-├── <LoadingSkeleton />                 # Skeleton loader 
+  return cleaned.startsWith("+")
+    ? "+" + cleaned.slice(1).replace(/\D/g, "")
+    : cleaned.replace(/\D/g, "");
+}
+```
 
-├── <EmptyPanel />                      # Empty state UI 
+---
 
-└── <NotFoundPage />                    # 404 page 
+# 9. Error State Matrix
 
-5. Per-component contract 
+| Screen | Loading | Error | Empty (No Data) | Empty (Filtered / Not Found) |
+|---|---|---|---|---|
+| **Leads List** | Loading skeleton rows | "Couldn't load leads." + Retry | "No leads yet. Create your first lead." + New Lead button | "No leads match your search or filter." + Clear Filters |
+| **Lead Detail** | Loading skeleton | "Couldn't load this lead." + Retry | N/A | "Lead not found." + Back to Leads |
+| **Create Lead** | Submit button spinner | "Couldn't create the lead." (Keep user input) | N/A | N/A |
 
-5.1 <LeadsListPage /> 
+---
 
-Props - None (Route component rendered by React Router). 
+# 10. Styling + Theming
 
-Local State 
+## Component Library
 
-{ 
-  page: number,                    // Current page number 
-  pageSize: 10 | 25 | 50,           // Number of rows per page 
-  searchInput: string,              // User input in search field 
-  search: string,                   // Debounced search value 
-  statusFilter: LeadStatus | "ALL", // Selected status filter 
-  pendingDelete: Lead | null        // Stores lead selected for deletion 
-} 
+- Material UI (MUI v5)
 
-Data Hooks 
+## Theme
 
-useLeadsList()  
+- Default MUI Light Theme
 
-useDeleteLead()  
+## Dark Mode
 
-Side Effects 
+- Not implemented (Stretch Goal)
 
-Debounce the search input using useEffect() (300 ms delay).  
+## Styling Approach
 
-Refresh the lead list after deleting a lead.  
+- Custom CSS will be kept minimal.
+- Most styling will be done using MUI's `sx` prop.
+- Global styles will be managed through `ThemeProvider` when required.
 
-Renders 
+---
 
-Loading → LoadingSkeleton  
+# 11. File Layout
 
-Error → DataState with error message  
+```text
+src/
+├── App.tsx
+├── main.tsx
+├── router.tsx
+├── theme.ts
+│
+├── lib/
+│   └── queryClient.ts
+│
+├── api/
+│   └── axios.ts
+│
+├── features/
+│   └── leads/
+│       ├── leadsApi.ts
+│       ├── useLeads.ts
+│       ├── leadsKeys.ts
+│       └── validate.ts
+│
+├── pages/
+│   ├── LeadsListPage.tsx
+│   ├── LeadDetailPage.tsx
+│   ├── CreateLeadPage.tsx
+│   └── NotFoundPage.tsx
+│
+└── components/
+    ├── PageHeader.tsx
+    ├── StatusChip.tsx
+    ├── ConfirmDialog.tsx
+    ├── LoadingSkeleton.tsx
+    ├── ErrorPanel.tsx
+    ├── EmptyPanel.tsx
+    └── DataState.tsx
+```
 
-Empty → EmptyPanel  
+### Folder Responsibilities
 
-Success → LeadsTable 
+| Folder | Responsibility |
+|---|---|
+| `api` | Axios instance and API communication |
+| `components` | Reusable UI components shared across pages |
+| `features/leads` | Lead-specific API functions, hooks, validation, and query keys |
+| `lib` | Shared library configuration (QueryClient) |
+| `pages` | Route-level page components |
+| Root (`App`, `main`, `router`, `theme`) | Application entry, routing, providers, and theme configuration |
 
-5.2 <LeadDetailPage /> 
+---
 
-Props - None (Reads id using useParams()). 
+# 12. Testing Plan (Stretch Goal)
 
-Local State 
+## Framework
 
-{ 
-  confirmDelete: boolean 
-} 
+- Vitest
 
-Data Hooks 
+## Test File
 
-useLead(id)  
+```text
+src/features/leads/validate.test.ts
+```
 
-useDeleteLead()  
+## Unit Test Targets
 
-Side Effects 
+### `normalisePhone()`
 
-Fetch lead details when the page loads.  
+| Input | Expected Output |
+|---|---|
+| `+91 98-76 54 32 10` | `+919876543210` |
+| `` | `` |
+| `abc@123` | `` |
 
-Navigate back to the Leads page after successful deletion.  
+---
 
-Renders 
+### `validateLead()`
 
-Loading  
+Test each validation rule individually.
 
-Error  
+- First name required
+- Last name required
+- Email validation
+- Phone validation
+- Status validation
+- Owner validation
 
-Lead Not Found  
+---
 
-Lead Details  
+# 13. Open Questions
 
- 
+## OQ-A
 
-5.3 <CreateLeadPage /> 
+**Question**
 
-Props - None. 
+Should search and status filtering be handled using backend query parameters or by filtering on the frontend?
 
-Local State 
+**Default Decision**
 
-{ 
-  values: { 
-    first_name: "", 
-    last_name: "", 
-    email: "", 
-    phone: "", 
-    status: "New", 
-    owner: "", 
-    source: "" 
-  }, 
- 
-  errors: {}, 
- 
-  submitError: null 
-} 
+Use backend query parameters as described in the PRD.
 
-Data Hooks 
+## OQ-B
 
-useCreateLead()  
+**Question**
 
-Side Effects 
+Should the proposed folder structure be followed exactly, or can it be adjusted during implementation?
 
-Focus the first input field when the page opens.  
+**Default Decision**
 
-Navigate back to the Leads List after successful submission.  
+Follow the proposed structure initially and make changes only if they improve maintainability.
 
-Display a success notification after creating a lead.  
+## OQ-C
 
-Validation 
+**Question**
 
-Validation will check: 
+Should the lead list refresh automatically after creating or deleting a lead?
 
-Required fields  
+**Default Decision**
 
-Valid email  
+Use TanStack Query to automatically refresh the Leads List after successful create and delete operations.
 
-Valid phone number  
+---
 
-Valid status selection  
+# 14. Review Sign-off
 
-Validation runs before submitting the form. 
+| Reviewer | Date | Verdict | Comments |
+|---|---|---|---|
+| Sameer Singh | | Approved / Revise / Reject | |
 
-5.4 <LeadForm /> 
+---
 
-Decision 
-
-A separate LeadForm component will be created. 
-
-Why 
-
-Keeps CreateLeadPage cleaner.  
-
-Can be reused later for the Edit Lead page (Stretch Goal).  
-
-Avoids duplicating form fields.  
-
- 
-
-5.5 <ConfirmDialog /> 
-
-Props 
-
-{ 
-  open: boolean, 
-  title: string, 
-  description?: string, 
-  confirmLabel?: string, 
-  cancelLabel?: string, 
-  destructive?: boolean, 
-  loading?: boolean, 
-  onConfirm: () => void, 
-  onClose: () => void 
-} 
-
-Behaviour 
-
-Opens before deleting a lead.  
-
-Clicking Cancel closes the dialog.  
-
-Clicking Confirm deletes the lead.  
-
-Buttons remain disabled while the delete request is in progress.  
-
-Clicking outside the dialog or pressing Esc closes it (unless loading). 
-
-6. Data-fetching plan 
-
-6.1 Query — useLeadsList(params) 
-
-File: src/features/leads/useLeads.js 
-
-Key factory: leadsKeys.list(params) → ['leads', 'list', params] 
-
-Fetcher: fetchLeadsList(params) — builds query string, calls GET /leads?..., returns { rows, total } (reads X-Total-Count). 
-
-Options: 
-
-staleTime: 30_000 (30 s) 
-
-keepPreviousData: true ← required by NFR-01 
-
-refetchOnWindowFocus: false 
-
-Consumed by: <LeadsListPage /> 
-
-6.2 Query — useLead(id) 
-
-Key: leadsKeys.detail(id) → ['leads', 'detail', String(id)] 
-
-Fetcher: fetchLead(id) — GET /leads/:id; returns Lead or throws LeadNotFoundError on 404. 
-
-Options: enabled: !!id, staleTime: 60_000 
-
-Consumed by: <LeadDetailPage /> 
-
-6.3 Mutation — useCreateLead() 
-
-Mutation fn: POST /leads, body = a validated Lead. 
-
-On success: queryClient.invalidateQueries({ queryKey: leadsKeys.lists()}) 
-
-On error: surface the error to the caller (page shows it). 
-
-Consumed by: <CreateLeadPage /> (and edit stretch if reused). 
-
-6.4 Mutation — useDeleteLead() 
-
-Mutation fn: DELETE /leads/:id 
-
-On success: invalidate leadsKeys.lists() and — for extra polish — remove the detail cache entry via queryClient.removeQueries({ queryKey: leadsKeys.detail(id)}). 
-
-Consumed by: <LeadsListPage /> (row-level) + <LeadDetailPage />. 
-
-6.5 Query-key factory 
-
-export const leadsKeys = { 
-  all: ['leads'], 
-  lists: () => ['leads', 'list'],          // matches every list variant 
-  list: (params) => ['leads', 'list', params], 
-  details: () => ['leads', 'detail'], 
-  detail: (id) => ['leads', 'detail', String(id)], 
-}; 
- 
-
-Invalidation map — which mutation invalidates which query: 
-
-Mutation 
-
-Invalidates 
-
-Create 
-
-leadsKeys.lists() 
-
-Delete 
-
-leadsKeys.lists() + removes leadsKeys.detail(deletedId) 
-
- 
-
-7. Global state 
-
-URL / Router State  
-
-- Route parameter (:id) for Lead Detail page.  
-
-- Page number and filters can be stored in the URL (Stretch Goal).  
-
-TanStack Query Cache  
-
-- Leads list  
-
-- Individual lead details  
-
-Local Component State  
-
-- Search input  
-
-- Status filter  
-
-- Pagination  
-
-- Form values 
-
-- Delete confirmation dialog  
-
-- Temporary UI states  
-
-Redux / Zustand / Context  
-
-- None.  
-
- 
-
-The application is small enough that react useState and TanStack Query are sufficient. 
-
- 
-
-Justification  
-
-No additional global state library is required because server state is managed by TanStack Query and UI state is managed locally within each component. 
-
-8. Form-validation rules 
-
-export function validateLead(values) { 
-
-  const errors = {}; 
-
-  
-
-  if (!values.first_name?.trim()) 
-
-    errors.first_name = "First name is required"; 
-
-  else if (values.first_name.length > 64) 
-
-    errors.first_name = "Max 64 characters"; 
-
-  
-
-  if (!values.last_name?.trim()) 
-
-    errors.last_name = "Last name is required"; 
-
-  else if (values.last_name.length > 64) 
-
-    errors.last_name = "Max 64 characters"; 
-
-  
-
-  if (!values.email?.trim()) 
-
-    errors.email = "Email is required"; 
-
-  else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) 
-
-    errors.email = "Enter a valid email"; 
-
-  
-
-  const digits = String(values.phone || "").replace(/[+\s-]/g, ""); 
-
-  
-
-  if (!digits) 
-
-    errors.phone = "Phone is required"; 
-
-  else if (!/^\d{7,15}$/.test(digits)) 
-
-    errors.phone = "Phone must be 7–15 digits"; 
-
-  
-
-  if (!LEAD_STATUSES.includes(values.status)) 
-
-    errors.status = "Pick a status"; 
-
-  
-
-  if (!values.owner?.trim()) 
-
-    errors.owner = "Owner is required"; 
-
-  
-
-  return errors; 
-
-} 
-
- 
-
-Phone normaliser — before submit, strip +, spaces, hyphens: 
-
-export function normalisePhone(input) { 
-  if (!input) return ''; 
-  const cleaned = input.replace(/[\s-]/g, ''); 
-  return cleaned.startsWith('+') ? '+' + cleaned.slice(1).replace(/\D/g, '') 
-                                 : cleaned.replace(/\D/g, ''); 
-} 
-
-9. Error-state matrix 
-
-Screen 
-
-Loading 
-
-Error 
-
-Empty (No Data) 
-
-Empty (Filtered / Not Found) 
-
-Leads List 
-
-Loading skeleton rows 
-
-"Couldn't load leads." + Retry button 
-
-"No leads yet. Create your first lead." + New Lead button 
-
-"No leads match your search or filter." + Clear Filters button 
-
-Lead Detail 
-
-Loading skeleton 
-
-"Couldn't load this lead." + Retry button 
-
-N/A 
-
-"Lead not found." + Back to Leads button 
-
-Create Lead 
-
-Submit button shows loading spinner 
-
-"Couldn't create the lead." (Keep user input) 
-
-N/A 
-
-N/A 
-
-10. Styling + theming 
-
-Component Library - Material UI (MUI v5) 
-
-Palette - Default MUI light theme. 
-
-Dark Mode - Not implemented (Stretch Goal). 
-
-Custom CSS - Custom CSS will be kept minimal. Most styling will be done using MUI's sx prop, with Theme Provider used if global styling is required. 
-
-11. File layout 
-
-src/ 
-
-├── App.jsx 
-
-├── main.jsx 
-
-├── router.jsx 
-
-├── theme.js 
-
-│ 
-
-├── lib/ 
-
-│   └── queryClient.js 
-
-│ 
-
-├── api/ 
-
-│   └── axios.js 
-
-│ 
-
-├── features/ 
-
-│   └── leads/ 
-
-│       ├── leadsApi.js 
-
-│       ├── useLeads.js 
-
-│       ├── leadsKeys.js 
-
-│       └── validate.js 
-
-│ 
-
-├── pages/ 
-
-│   ├── LeadsListPage.jsx 
-
-│   ├── LeadDetailPage.jsx 
-
-│   ├── CreateLeadPage.jsx 
-
-│   └── NotFoundPage.jsx 
-
-│ 
-
-└── components/ 
-
-    ├── PageHeader.jsx 
-
-    ├── StatusChip.jsx 
-
-    ├── ConfirmDialog.jsx 
-
-    ├── LoadingSkeleton.jsx 
-
-    ├── ErrorPanel.jsx 
-
-    ├── EmptyPanel.jsx 
-
-    └── DataState.jsx 
-
-12. Testing plan (F-27 stretch) 
-
-Unit Test Target 
-
-Test normalisePhone() with different phone number formats. 
-
-Test valid, empty, and invalid inputs. 
-
-Test Cases 
-
-"+91 98-76 54 32 10" → "+919876543210" 
-
-"" → "" 
-
-"abc@123" → "" 
-
- 
-
-Test validateLead() for each validation rule: 
-
-First name required 
-
-Last name required 
-
-Valid email 
-
-Valid phone number 
-
-Valid status 
-
-Owner required 
-
-Framework - Vitest 
-
-Test File - Src/features/leads/validate.test.js 
-
-13. Open questions 
-
-OQ-A - Question: Should the search and status filter be handled by the backend (API query parameters) or by filtering the data on the frontend? 
-
-  
-
-Default if unresolved: I will use backend query parameters as described in the PRD. 
-
-  
-
-OQ-B - Question: Should the project follow the proposed folder structure exactly, or can the structure be adjusted if it improves maintainability during implementation? 
-
-  
-
-Default if unresolved: I will follow the proposed project structure and only make changes if necessary, during implementation. 
-
-  
-
-OQ-C - Question:  Should the lead list refresh automatically after creating or deleting a lead, or should the page be refreshed manually? 
-
-  
-
-Default if unresolved: I will use TanStack Query to refresh the lead list automatically after successful create and delete operations. 
-
-14. Review sign-off 
-
-Reviewer 
-
-Date 
-
-Verdict 
-
-Comments 
-
-Sameer Singh 
-
- 
-
-Approved / Revise / Reject 
-
- 
-
+**End of Low-Level Design**
