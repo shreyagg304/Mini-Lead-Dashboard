@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import DataState from '../components/DataState.tsx'
 import StatusChip from '../components/StatusChip.tsx'
 import { useNavigate } from 'react-router-dom'
+import ConfirmDialog from '../components/ConfirmDialog.tsx'
 
 type Lead = {
     id : number;
@@ -83,8 +84,6 @@ function LeadsListPage() {
 
     const query = useLeads(page + 1, rowPerPage, debouncedText, status, sortBy, sortDirection);
 
-    console.log(query)
-
     const response = query.data as LeadResponse | undefined;
 
     return (
@@ -158,7 +157,10 @@ function LeadsListPage() {
                             </TableHead>
                             <TableBody >
                                 {response.data.map((row) => (
-                                    <TableRow key={row.id} onClick={() => navigate(`/leads/${row.id}`)} hover sx = {{cursor : 'pointer'}}>
+                                    <TableRow key={row.id} onClick={() => {
+    console.log("ROW CLICKED");
+    navigate(`/leads/${row.id}`);
+}} hover sx = {{cursor : 'pointer'}}>
                                         <TableCell>{row.id}</TableCell>
                                         <TableCell>{row.first_name} {row.last_name}</TableCell>
                                         <TableCell>{row.email}</TableCell>
@@ -166,6 +168,7 @@ function LeadsListPage() {
                                         <TableCell><StatusChip status={row.status}/></TableCell>
                                         <TableCell>{row.owner}</TableCell>
                                         <TableCell>{row.created_on}</TableCell>
+                                        <TableCell> <ConfirmDialog numericId={row.id} /></TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

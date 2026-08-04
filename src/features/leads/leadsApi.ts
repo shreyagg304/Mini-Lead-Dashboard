@@ -22,5 +22,10 @@ export const getLeads = (page : number, rowPerPage : number, debouncedText : str
 
 export const getLead = (id : number) => {
     return api.get(`/leads/${id}`)
-    .then(leaddata => leaddata.data)
+    .then(response => response.data)
+}
+
+export const deleteLead = (id : number) => {
+    return api.delete(`/leads/${id}`)
+    .then(response => response.data)
 }
