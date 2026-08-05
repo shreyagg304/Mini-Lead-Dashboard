@@ -1,5 +1,5 @@
 import { useLeads } from '../features/leads/useLeads.ts'
-import { TableContainer, Table, TableBody, TableHead, TableRow, TableCell, Paper, TablePagination, TableFooter, TextField, FormControl, InputLabel, Select, MenuItem, type SelectChangeEvent, TableSortLabel} from '@mui/material'
+import { TableContainer, Table, TableBody, TableHead, TableRow, TableCell, Paper, TablePagination, TableFooter, TextField, FormControl, InputLabel, Select, MenuItem, type SelectChangeEvent, TableSortLabel, Button} from '@mui/material'
 import { useState, useEffect } from 'react'
 import DataState from '../components/DataState.tsx'
 import StatusChip from '../components/StatusChip.tsx'
@@ -7,7 +7,7 @@ import { useNavigate } from 'react-router-dom'
 import ConfirmDialog from '../components/ConfirmDialog.tsx'
 
 type Lead = {
-    id : number;
+    id : string;
     first_name : string;
     last_name : string;
     email : string;
@@ -35,8 +35,8 @@ function LeadsListPage() {
     const [text, setText] = useState('');
     const [debouncedText, setDebouncedText] = useState(text);
     const [status, setStatus] = useState('');
-    const [sortBy, setSortBy] = useState('');
-    const [sortDirection, setSortDirection] = useState<'asc'|'desc'>('asc');
+    const [sortBy, setSortBy] = useState('created_on');
+    const [sortDirection, setSortDirection] = useState<'asc'|'desc'>('desc');
     const navigate = useNavigate();
     const emptyMessage = text != "" || status != "" ? 'No leads found matching your search' : 'No leads available';
  
@@ -108,6 +108,7 @@ function LeadsListPage() {
                     <MenuItem value="Won">Won</MenuItem>
                 </Select>
             </FormControl>
+            <Button onClick={() => navigate('/leads/new')} color='primary'> + Add Lead </Button>
             <DataState
                 isLoading={query.isLoading}
                 isError={query.isError}
@@ -157,10 +158,7 @@ function LeadsListPage() {
                             </TableHead>
                             <TableBody >
                                 {response.data.map((row) => (
-                                    <TableRow key={row.id} onClick={() => {
-    console.log("ROW CLICKED");
-    navigate(`/leads/${row.id}`);
-}} hover sx = {{cursor : 'pointer'}}>
+                                    <TableRow key={row.id} onClick={() => { navigate(`/leads/${row.id}`);}} hover sx = {{cursor : 'pointer'}}>
                                         <TableCell>{row.id}</TableCell>
                                         <TableCell>{row.first_name} {row.last_name}</TableCell>
                                         <TableCell>{row.email}</TableCell>
@@ -168,7 +166,7 @@ function LeadsListPage() {
                                         <TableCell><StatusChip status={row.status}/></TableCell>
                                         <TableCell>{row.owner}</TableCell>
                                         <TableCell>{row.created_on}</TableCell>
-                                        <TableCell> <ConfirmDialog numericId={row.id} /></TableCell>
+                                        <TableCell> <ConfirmDialog id={row.id} /></TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

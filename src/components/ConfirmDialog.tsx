@@ -6,10 +6,10 @@ import { useQueryClient } from "@tanstack/react-query";
 import DeleteOutlineTwoToneIcon from '@mui/icons-material/DeleteOutlineTwoTone';
 
 type ConfirmDialogProp = {
-    numericId : number
+    id : string
 }
 
-function ConfirmDialog({numericId} : ConfirmDialogProp) {
+function ConfirmDialog({id} : ConfirmDialogProp) {
 
     const [open, setOpen] = useState(false);
     const navigate = useNavigate();
@@ -64,7 +64,7 @@ function ConfirmDialog({numericId} : ConfirmDialogProp) {
                 <DialogActions>
                     <Button onClick={(event) => {
                         event.stopPropagation();
-                        mutation.mutate(numericId, {
+                        mutation.mutate(id, {
                             onSuccess: handleRefresh,
                             onError: () => setErrorMessage("Failed to delete the lead. Please try again.")
                         })}} >

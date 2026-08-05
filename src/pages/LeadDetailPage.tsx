@@ -8,10 +8,9 @@ import ConfirmDialog from '../components/ConfirmDialog.tsx';
 function LeadDetailPage() {
     
     const {id} = useParams();
-    const numericId = Number(id);
     const navigate = useNavigate();
 
-    const query = useLead(numericId);
+    const query = useLead(id!);
     
     const response = query.data;
 
@@ -20,7 +19,7 @@ function LeadDetailPage() {
 
             <Button onClick={() => navigate('/leads')}>Back to List</Button>
 
-            <ConfirmDialog numericId={numericId}/>
+            <ConfirmDialog id={id!}/>
 
             <DataState 
                 isLoading={query.isLoading}

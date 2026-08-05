@@ -1,13 +1,93 @@
 {
   "leads": [
-    { "id": 1, "first_name": "Aditi",   "last_name": "Sharma",  "email": "aditi.sharma@example.com",   "phone": "+91 9876543210", "status": "New",       "owner": "Rahul",  "source": "Website",  "created_on": "2025-08-12" },
-    { "id": 2, "first_name": "Rohan",   "last_name": "Verma",   "email": "rohan.verma@example.com",    "phone": "+91 9812345678", "status": "Contacted", "owner": "Priya",  "source": "Referral", "created_on": "2025-08-14" },
-    { "id": 3, "first_name": "Meera",   "last_name": "Iyer",    "email": "meera.iyer@example.com",     "phone": "+91 9900112233", "status": "Qualified", "owner": "Rahul",  "source": "Ad campaign","created_on": "2025-08-16" },
-    { "id": 4, "first_name": "Kabir",   "last_name": "Malhotra","email": "kabir.malhotra@example.com", "phone": "+91 9812390123", "status": "Won",       "owner": "Sana",   "source": "Referral", "created_on": "2025-08-18" },
-    { "id": 5, "first_name": "Ananya",  "last_name": "Rao",     "email": "ananya.rao@example.com",     "phone": "+91 9888123456", "status": "Lost",      "owner": "Priya",  "source": "Cold call","created_on": "2025-08-20" },
-    { "id": 6, "first_name": "Vikram",  "last_name": "Nair",    "email": "vikram.nair@example.com",    "phone": "+91 9911223344", "status": "New",       "owner": "Sana",   "source": "Website",  "created_on": "2025-08-22" },
-    { "id": 7, "first_name": "Isha",    "last_name": "Kapoor",  "email": "isha.kapoor@example.com",    "phone": "+91 9822233445", "status": "Contacted", "owner": "Rahul",  "source": "Website",  "created_on": "2025-08-25" },
-    { "id": 8, "first_name": "Arjun",   "last_name": "Sinha",   "email": "arjun.sinha@example.com",    "phone": "+91 9755566778", "status": "Qualified", "owner": "Priya",  "source": "Ad campaign","created_on": "2025-08-28" },
+    {
+      "id": "1",
+      "first_name": "Aditi",
+      "last_name": "Sharma",
+      "email": "aditi.sharma@example.com",
+      "phone": "+91 9876543210",
+      "status": "New",
+      "owner": "Rahul",
+      "source": "Website",
+      "created_on": "2025-08-12"
+    },
+    {
+      "id": "2",
+      "first_name": "Rohan",
+      "last_name": "Verma",
+      "email": "rohan.verma@example.com",
+      "phone": "+91 9812345678",
+      "status": "Contacted",
+      "owner": "Priya",
+      "source": "Referral",
+      "created_on": "2025-08-14"
+    },
+    {
+      "id": "3",
+      "first_name": "Meera",
+      "last_name": "Iyer",
+      "email": "meera.iyer@example.com",
+      "phone": "+91 9900112233",
+      "status": "Qualified",
+      "owner": "Rahul",
+      "source": "Ad campaign",
+      "created_on": "2025-08-16"
+    },
+    {
+      "id": "4",
+      "first_name": "Kabir",
+      "last_name": "Malhotra",
+      "email": "kabir.malhotra@example.com",
+      "phone": "+91 9812390123",
+      "status": "Won",
+      "owner": "Sana",
+      "source": "Referral",
+      "created_on": "2025-08-18"
+    },
+    {
+      "id": "5",
+      "first_name": "Ananya",
+      "last_name": "Rao",
+      "email": "ananya.rao@example.com",
+      "phone": "+91 9888123456",
+      "status": "Lost",
+      "owner": "Priya",
+      "source": "Cold call",
+      "created_on": "2025-08-20"
+    },
+    {
+      "id": "6",
+      "first_name": "Vikram",
+      "last_name": "Nair",
+      "email": "vikram.nair@example.com",
+      "phone": "+91 9911223344",
+      "status": "New",
+      "owner": "Sana",
+      "source": "Website",
+      "created_on": "2025-08-22"
+    },
+    {
+      "id": "7",
+      "first_name": "Isha",
+      "last_name": "Kapoor",
+      "email": "isha.kapoor@example.com",
+      "phone": "+91 9822233445",
+      "status": "Contacted",
+      "owner": "Rahul",
+      "source": "Website",
+      "created_on": "2025-08-25"
+    },
+    {
+      "id": "8",
+      "first_name": "Arjun",
+      "last_name": "Sinha",
+      "email": "arjun.sinha@example.com",
+      "phone": "+91 9755566778",
+      "status": "Qualified",
+      "owner": "Priya",
+      "source": "Ad campaign",
+      "created_on": "2025-08-28"
+    },
     {
       "id": "9",
       "first_name": "Neha",
@@ -18,17 +98,6 @@
       "owner": "Rahul",
       "source": "Website",
       "created_on": "2025-08-30"
-    },
-    {
-      "id": "10",
-      "first_name": "Karan",
-      "last_name": "Mehta",
-      "email": "karan.mehta@example.com",
-      "phone": "+91 9765432109",
-      "status": "New",
-      "owner": "Priya",
-      "source": "Referral",
-      "created_on": "2025-09-01"
     },
     {
       "id": "11",
@@ -348,6 +417,28 @@
       "owner": "Priya",
       "source": "Cold call",
       "created_on": "2025-11-04"
+    },
+    {
+      "first_name": "anita",
+      "last_name": "gupta",
+      "email": "anita@gmail.com",
+      "phone": "987863893",
+      "status": "New",
+      "owner": "ria",
+      "source": "web",
+      "created_on": "2026-08-05",
+      "id": "czVlp9pY_mQ"
+    },
+    {
+      "first_name": "riya",
+      "last_name": "garg",
+      "email": "riya@gmail.com",
+      "phone": "86758767",
+      "status": "New",
+      "owner": "rohan",
+      "source": "web",
+      "created_on": "2026-08-05",
+      "id": "kkMg0XH-94E"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
