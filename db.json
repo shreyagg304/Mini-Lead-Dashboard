@@ -430,15 +430,15 @@
       "id": "tn57HRuZEaA"
     },
     {
-      "first_name": "sfa",
-      "last_name": "fwsef",
-      "email": "saf@gag.fs",
-      "phone": "979778676",
+      "first_name": "anita",
+      "last_name": "gupta",
+      "email": "anita@gmail.com",
+      "phone": "986389384",
       "status": "New",
-      "owner": "jndyj",
-      "source": "eheh",
+      "owner": "riya",
+      "source": "web",
       "created_on": "2026-08-06",
-      "id": "CeMBzms0nug"
+      "id": "M_q1CAmgAio"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"

@@ -1,5 +1,7 @@
 # High-Level Design — Mini Leads Dashboard
 
+> Updated after implementation
+
 ---
 
 ## 1. Metadata
@@ -8,16 +10,16 @@
 |---|---|
 | Project name | Mini Leads Dashboard |
 | Author | Shreya Aggarwal |
-| Date | 2026-07-29 |
+| Date | 2026-08-06 |
 | Reviewers | Sameer Singh |
-| Status | Draft |
-| Related docs | PRD v1.0 · LLD v0.1 |
+| Status | Completed |
+| Related docs | PRD v1.0 · LLD v1.0 |
 
 ---
 
 ## 2. Purpose
 
-The Mini Leads Dashboard is a lightweight CRM application designed for small sales teams to manage their leads efficiently. It allows sales agents to view all leads in a searchable and filterable table, access detailed information about individual leads, create new leads, and delete duplicate or invalid entries with confirmation. It is intended as a lightweight CRM dashboard and does not include authentication, multi-tenancy, or other advanced CRM features.
+The Mini Leads Dashboard is a lightweight CRM application designed for small sales teams to manage leads efficiently. It allows sales agents to view, search, filter, sort, create, update, and delete leads while also providing a detailed view of each lead. The application uses a mock REST backend with TanStack Query for server-state management and Material UI for the user interface. It is responsive and supports loading, error, and empty states along with light and dark themes. Authentication, multi-tenancy, and advanced CRM features are intentionally out of scope.
 
 ---
 
@@ -32,7 +34,7 @@ The Mini Leads Dashboard is a lightweight CRM application designed for small sal
                           ▼
 ┌──────────────────────────────────────────────────────┐
 │             Leadboard SPA (React)                    │
-│ React Router · MUI · TanStack Query · axios          │
+│ React Router · MUI · TanStack Query · Axios          │
 └───────────────────────┬──────────────────────────────┘
                         │ REST API
                         ▼
@@ -47,15 +49,15 @@ The Mini Leads Dashboard is a lightweight CRM application designed for small sal
 
 ### Boundary Notes
 
-- **Sales Agent** – Person who uses the application to manage leads.
-- **Browser** – Where the user interacts with the React application.
-- **HTTP + JSON** – Used by the frontend to communicate with the backend.
+- **Sales Agent** – Uses the application to manage leads.
+- **Browser** – Runs the React application.
+- **HTTP + JSON** – Communication between frontend and backend.
 - **Leadboard SPA** – Main React application.
-- **React Router** – Handles navigation between pages.
-- **MUI** – Provides UI components.
-- **TanStack Query** – Fetches, caches, and manages server data.
-- **axios** – Sends HTTP requests.
-- **json-server** – Mock backend storing lead data in `db.json`.
+- **React Router** – Handles client-side routing.
+- **Material UI** – UI components and theming.
+- **TanStack Query** – Handles fetching, caching, and mutations.
+- **Axios** – HTTP client.
+- **json-server** – Mock REST backend storing lead data.
 
 ---
 
@@ -63,12 +65,12 @@ The Mini Leads Dashboard is a lightweight CRM application designed for small sal
 
 | # | Group | What lives here |
 |---|---|---|
-| 1 | App Shell | Router, ThemeProvider, QueryClientProvider, global layout |
-| 2 | Leads List Page | Lead table, search, status filter, sorting, pagination, page-level state |
-| 3 | Lead Detail Page | Lead details, activity history, delete confirmation dialog |
-| 4 | Create Lead Form | Input fields, validation, submit handler |
-| 5 | Data Layer | axios configuration, TanStack Query hooks, API calls, query keys |
-| 6 | Shared UI | LoadingState, ErrorState, EmptyState, ConfirmDialog, reusable MUI components |
+| 1 | **App Shell** | Router, ThemeProvider, QueryClientProvider, global layout |
+| 2 | **Leads List Page** | Lead table, search, status filter, sorting, pagination, theme toggle |
+| 3 | **Lead Detail Page** | Lead details, edit navigation, activity section, delete confirmation dialog |
+| 4 | **Reusable Lead Form** | Shared Create/Edit form, validation, submit handling |
+| 5 | **Data Layer** | Axios configuration, REST API functions, TanStack Query hooks, cache invalidation |
+| 6 | **Shared UI** | DataState, StatusChip, ConfirmDialog, reusable Material UI components |
 
 ---
 
@@ -78,23 +80,32 @@ The Mini Leads Dashboard is a lightweight CRM application designed for small sal
 
 | Field | Value |
 |---|---|
-| Chosen backend | json-server |
+| Chosen backend (OQ-01) | json-server |
 | Base URL | `http://localhost:4000` |
-| Data shape summary | `leads` array containing the fields defined in the PRD |
+| Data shape summary | `leads` collection containing lead information such as name, email, phone, status, owner, source, and created date |
 
-### 5.2 Endpoints
+---
+
+### 5.2 Endpoints You'll Consume
 
 | Endpoint | Method | Purpose | Query Params |
 |---|---|---|---|
-| `/leads` | GET | List leads | `_page`, `_limit`, `_sort`, `_order`, `q`, `status` |
-| `/leads/:id` | GET | Lead details | |
-| `/leads` | POST | Create lead | |
-| `/leads/:id` | DELETE | Delete lead | |
-| `/leads/:id` | PATCH | Edit lead (Stretch) | |
+| `/leads` | GET | List leads | `_page`, `_per_page`, `_sort`, `status`, `first_name:contains` |
+| `/leads/:id` | GET | Detail | |
+| `/leads` | POST | Create | |
+| `/leads/:id` | PUT | Update | |
+| `/leads/:id` | DELETE | Delete | |
+
+---
 
 ### 5.3 Anything Else
 
-N/A
+| Library | Purpose |
+|---|---|
+| Material UI | UI components, responsive layouts, theming |
+| TanStack Query | Server-state management |
+| Axios | HTTP client |
+| React Router | Client-side routing |
 
 ---
 
@@ -102,51 +113,41 @@ N/A
 
 ### KAD-01 — Backend Choice (OQ-01)
 
-**Decision:** Use json-server locally.
-
-**Why:** Easy to set up, works offline, and behaves like a REST backend.
-
-**Trade-off:** React app and json-server must run separately.
+- **Decision:** Use json-server as the mock backend.
+- **Why:** Provides a lightweight REST API suitable for frontend development.
+- **Trade-off:** Frontend and backend must run separately.
 
 ---
 
 ### KAD-02 — Form State (OQ-02)
 
-**Decision:** Use React `useState`.
-
-**Why:** The form is small and simple.
-
-**Trade-off:** Larger forms may become difficult to manage.
+- **Decision:** Use React `useState` with a reusable `LeadForm` component.
+- **Why:** Keeps validation centralized while allowing the same form to be reused for Create and Edit flows.
+- **Trade-off:** Requires passing different props (`initialValues`, `buttonText`, `onSubmit`) based on the page.
 
 ---
 
 ### KAD-03 — Cache Policy (OQ-04)
 
-**Decision:** Use TanStack Query's default caching.
-
-**Why:** Reduces unnecessary API requests.
-
-**Trade-off:** Cached data may require invalidation or refetching to stay up to date.
+- **Decision:** Use TanStack Query for server-state management.
+- **Why:** Simplifies data fetching, caching, loading states, and mutations.
+- **Trade-off:** Requires cache invalidation after data-changing operations.
 
 ---
 
 ### KAD-04 — Post-create Refresh (OQ-05)
 
-**Decision:** Refresh the leads list after creating a lead.
-
-**Why:** Newly created leads become visible immediately.
-
-**Trade-off:** Requires an additional API request.
+- **Decision:** Invalidate relevant queries after Create, Update, and Delete mutations.
+- **Why:** Ensures users always see the latest backend data.
+- **Trade-off:** Triggers additional API requests after successful mutations.
 
 ---
 
-### KAD-05 — Component Library
+### KAD-05 — Component Library Scope
 
-**Decision:** Use Material UI.
-
-**Why:** Provides ready-made, accessible components and speeds up development.
-
-**Trade-off:** Less flexibility compared to building everything from scratch.
+- **Decision:** Use Material UI across the application.
+- **Why:** Provides accessible, responsive components and built-in theming support.
+- **Trade-off:** Less styling flexibility than building custom components.
 
 ---
 
@@ -154,15 +155,15 @@ N/A
 
 | Concern | How you're handling it |
 |---|---|
-| Loading / Error / Empty States | Show dedicated UI for each state. |
-| Debounced Input | Delay search requests by ~300 ms. |
-| Global Error Handling | Display user-friendly error messages for failed API requests. |
-| Toast / Notification Pattern | Show success and error notifications after actions. |
-| Confirm-before-delete Pattern | Display a confirmation dialog before deletion. |
-| Responsive Layout Strategy | Use Material UI responsive components and layouts. |
-| Accessibility Baseline | Use semantic HTML, labels, and keyboard-accessible controls. |
-| Dark Mode | N/A |
-| URL-persisted State | N/A |
+| Loading / Error / Empty states | Reusable `DataState` component handles all three states. |
+| Debounced input | Search input debounced using `useEffect` (~300ms). |
+| Global error handling | Display user-friendly error messages for failed API requests and form submissions. |
+| Toast / Notification pattern | Not implemented. Errors are shown inline within the UI. |
+| Confirm-before-delete pattern | Reusable confirmation dialog before deleting a lead. |
+| Responsive layout strategy | Material UI responsive layouts and components. |
+| Accessibility baseline | Semantic HTML, labelled form fields, keyboard-accessible controls. |
+| Dark mode (if applicable) | Implemented using Material UI `ThemeProvider` with light/dark theme toggle. |
+| URL-persisted state (if applicable) | Not implemented. |
 
 ---
 
@@ -170,9 +171,9 @@ N/A
 
 | # | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
-| 1 | First time using TanStack Query. | High | Medium | Read documentation and practice with small examples. |
-| 2 | Combining search, filtering, and pagination. | Medium | Medium | Build and test one feature at a time. |
-| 3 | Using multiple new technologies together. | High | High | Follow the project structure and clarify doubts early. |
+| 1 | First time using TanStack Query. | Medium | High | Read documentation and build small features before integrating them. |
+| 2 | Combining search, filtering, sorting, and pagination. | Medium | Medium | Build and test each feature independently before combining them. |
+| 3 | Reusing the same form for both Create and Edit flows. | Medium | Medium | Use configurable props and keep validation logic centralized. |
 
 ---
 
@@ -180,25 +181,41 @@ N/A
 
 ### Alternative to KAD-01
 
-**Considered:** mockapi.io
+- **Considered:** mockapi.io
+- **Why rejected:** Requires an online service; json-server works locally and is easier to reset.
 
-**Why rejected:** Requires an online service; json-server works locally and is easier to reset.
+---
+
+### Alternative to KAD-02
+
+- **Considered:** Separate CreateForm and EditForm components.
+- **Why rejected:** A reusable `LeadForm` reduces duplicate code and centralizes validation.
 
 ---
 
 ### Alternative to KAD-05
 
-**Considered:** Tailwind CSS
-
-**Why rejected:** Material UI is part of the project stack and provides ready-made components for faster development.
+- **Considered:** Tailwind CSS
+- **Why rejected:** Material UI is part of the chosen stack and provides ready-made responsive components.
 
 ---
 
 ## 10. Out-of-Scope Confirmation
 
-> I confirm I am **not** building authentication, multi-tenancy, real-time updates, outbound messaging, reports/charts, CSV import/export, deals/opportunities, or deployment. If any of these creep into my design, I will stop and re-scope before continuing.
+> I confirm I am **not** building:
+>
+> - Authentication
+> - Multi-tenancy
+> - Real-time updates
+> - Outbound messaging
+> - Reports / Charts
+> - CSV Import / Export
+> - Deals / Opportunities
+> - Deployment
+>
+> If any of these creep into my design, I will stop and re-scope before continuing.
 
-**Signed / Date:** Shreya Aggarwal — 2026-07-29
+**Signed / Dated:** Shreya Aggarwal — 2026-08-06
 
 ---
 
@@ -210,4 +227,4 @@ N/A
 
 ---
 
-**End of HLD**
+**End of HLD Template**
