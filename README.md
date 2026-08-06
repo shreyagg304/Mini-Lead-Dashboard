@@ -1,75 +1,188 @@
-# React + TypeScript + Vite
+# Mini Leads Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+A lightweight CRM dashboard built with **React**, **TypeScript**, **Material UI**, **TanStack Query**, and **json-server**. The application allows users to manage leads through a responsive interface with searching, filtering, sorting, pagination, and CRUD operations.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Features
 
-## React Compiler
+- 📋 View all leads
+- 🔍 Search leads by first name
+- 🎯 Filter leads by status
+- ↕️ Sort leads by Name, Status, and Created Date
+- 📄 View lead details
+- ➕ Create new leads
+- ✏️ Edit existing leads
+- 🗑️ Delete leads with confirmation dialog
+- 📑 Pagination
+- 🌗 Light / Dark theme toggle
+- 📱 Responsive layout
+- ⚠️ Loading, Error, and Empty states
+- ✅ Client-side form validation
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## Tech Stack
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Frontend
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+- React
+- TypeScript
+- React Router
+- Material UI (MUI)
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+### Data Fetching
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+- TanStack Query
+- Axios
 
+### Backend
+
+- json-server
+
+---
+
+## Folder Structure
+
+```text
+src/
+│
+├── api/
+├── components/
+├── context/
+├── features/
+│   └── leads/
+├── pages/
+├── theme/
+├── App.tsx
+└── main.tsx
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+---
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## Project Structure
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+### Pages
+
+- Leads List
+- Lead Details
+- Create Lead
+- Edit Lead
+
+### Shared Components
+
+- LeadForm
+- DataState
+- ConfirmDialog
+- StatusChip
+- ThemeToggle
+
+---
+
+## Getting Started
+
+### 1. Clone the repository
+
+```bash
+git clone <repository-url>
+cd Leadboard
+```
+
+### 2. Install dependencies
+
+```bash
+npm install
+```
+
+### 3. Start the frontend
+
+```bash
+npm run dev
+```
+
+### 4. Start json-server
+
+```bash
+json-server --watch db.json --port 4000
+```
+
+The frontend will be available at:
 
 ```
+http://localhost:5173
+```
+
+The backend will run at:
+
+```
+http://localhost:4000
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---------|----------|-------------|
+| GET | `/leads` | Fetch all leads |
+| GET | `/leads/:id` | Fetch lead details |
+| POST | `/leads` | Create a lead |
+| PUT | `/leads/:id` | Update a lead |
+| DELETE | `/leads/:id` | Delete a lead |
+
+---
+
+## Architecture
+
+- React Router for navigation
+- TanStack Query for server-state management
+- Axios for API communication
+- Material UI for UI components
+- React Context for theme management
+- Reusable `LeadForm` component shared between Create and Edit pages
+
+---
+
+## Validation
+
+The Lead form validates:
+
+- First Name
+- Last Name
+- Email
+- Phone Number
+- Owner
+- Status
+
+Phone numbers are normalized before submission.
+
+---
+
+## Future Improvements
+
+- Authentication
+- Toast notifications
+- Activity history from backend
+- Unit and integration tests
+- Persistent theme preference
+- Advanced filtering
+- Dashboard analytics
+
+---
+
+## Screenshots
+
+<img width="1863" height="886" alt="image" src="https://github.com/user-attachments/assets/6a98c9b9-5f34-4bf4-93fa-71256e7737a7" />
+<img width="1872" height="881" alt="image" src="https://github.com/user-attachments/assets/beb7babb-7dde-4e1d-aab7-5cab34f6bf34" />
+<img width="1901" height="876" alt="image" src="https://github.com/user-attachments/assets/a8d274eb-9df7-4d9e-abf9-9515bd72c364" />
+<img width="1902" height="891" alt="image" src="https://github.com/user-attachments/assets/4361c559-e8b8-4743-9bc8-1cfe04e7e642" />
+
+---
+
+## Author
+
+**Shreya Aggarwal**
+
+Software Developer Intern
+
+---
