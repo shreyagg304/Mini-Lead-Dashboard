@@ -1,10 +1,9 @@
 import React, {useState} from "react"
-import { Box, Stack, TextField, FormControl, Select, InputLabel, MenuItem, type SelectChangeEvent, Button, FormHelperText } from '@mui/material'
+import { Stack, TextField,
+     FormControl, Select, InputLabel, MenuItem, type SelectChangeEvent, Button, FormHelperText, Paper,Box } from '@mui/material'
 import { validateLead, normalisePhone } from "../features/leads/validateLead"
 import { type LeadValues, type LeadErrors } from "../features/leads/validateLead" 
-import { useCreateLead } from "../features/leads/useCreateLead"
-import { useQueryClient } from "@tanstack/react-query"
-import { useNavigate } from "react-router-dom"
+import { useEffect } from "react"
 
 type FormData = {
     values : LeadValues,
@@ -12,31 +11,19 @@ type FormData = {
     submitError : string | null,
 }
 
-function LeadForm() {
+type LeadFormProps = {
+    initialValues: LeadValues;
+    onSubmit: (values: LeadValues) => void;
+    buttonText: string;
+}
+
+function LeadForm({initialValues, onSubmit, buttonText} : LeadFormProps) {
 
     const [formData, setFormData] = useState<FormData>({
-
-        values : {
-            first_name : '',
-            last_name : '',
-            email : '',
-            phone : '',
-            status: 'New',
-            owner : '',
-            source : '',
-            created_on: ''
-        },
-
+        values : initialValues,
         errors : {},
-
         submitError : null
     })
-
-    const queryClient = useQueryClient();
-
-    const mutation = useCreateLead();
-
-    const navigate = useNavigate();
 
     const handleChange = (event : React.ChangeEvent<HTMLInputElement>) => {
         const {name, value} = event.target;
@@ -70,34 +57,28 @@ function LeadForm() {
         if(Object.keys(errorObject).length > 0) {
             return;
         }
-        mutation.mutate(
-            {
-                ...formData.values,
-                phone: normalisePhone(formData.values.phone),
-                created_on: new Date().toISOString().split("T")[0]
-            },
-            {
-                onSuccess : () => {
-                    queryClient.invalidateQueries({queryKey : ['leads']}),
-                    navigate('/leads')
-                },
-                onError: () => {
-                    setFormData((prev) => ({
-                        ...prev,
-                        submitError : "Failed to create lead. Please try again"
-                    }))
-                }
-            }
-        );
+        onSubmit({
+            ...formData.values,
+            phone:normalisePhone(formData.values.phone),
+            created_on: new Date().toISOString().split("T")[0],
+        })
     }
+
+    useEffect(() => {
+        setFormData((prev) => ({
+            ...prev,
+            values: initialValues,
+        }));
+    }, [initialValues]);
 
     return (
         <>
-            <Box>
+        <Paper sx={{ padding: 4}}>
                 <form onSubmit={handleSubmit}>
                     <Stack spacing={3}>
-                        <div>
+                        <div style={{ display: 'flex', gap: "16px"}}>
                             <TextField
+                                fullWidth
                                 id="outlined-multiline-flexible"
                                 label="First Name"
                                 value={formData.values.first_name}
@@ -108,6 +89,7 @@ function LeadForm() {
                                 autoFocus
                             />
                             <TextField
+                                fullWidth
                                 id="outlined-multiline-flexible"
                                 label="Last Name"
                                 value={formData.values.last_name}
@@ -117,8 +99,9 @@ function LeadForm() {
                                 error={Boolean(formData.errors.last_name)}
                             />
                         </div>
-                        <div>
+                        <div style={{ display: 'flex', gap: "16px"}}>
                             <TextField
+                                fullWidth
                                 id="outlined-multiline-flexible"
                                 label="Email"
                                 type="email"
@@ -129,6 +112,7 @@ function LeadForm() {
                                 error={Boolean(formData.errors.email)}
                             />
                             <TextField
+                                fullWidth
                                 id="outlined-multiline-flexible"
                                 label="Phone"
                                 type="tel"
@@ -138,7 +122,7 @@ function LeadForm() {
                                 helperText={formData.errors.phone}
                                 error={Boolean(formData.errors.phone)}
                             />
-                            <FormControl sx={{ minWidth: 120 }}>
+                            <FormControl fullWidth>
                                 <InputLabel>Status</InputLabel>
                                 <Select
                                     value={formData.values.status}
@@ -152,11 +136,12 @@ function LeadForm() {
                                     <MenuItem value="Lost">Lost</MenuItem>
                                     <MenuItem value="Won">Won</MenuItem>
                                 </Select>
-                                <FormHelperText>{formData.errors.status}</FormHelperText>
+                                <FormHelperText error>{formData.errors.status}</FormHelperText>
                             </FormControl>
                         </div>
-                        <div>
+                        <div style={{ display: 'flex', gap: "16px"}}>
                             <TextField
+                                fullWidth
                                 id="outlined-multiline-flexible"
                                 label="Owner"
                                 value={formData.values.owner}
@@ -166,6 +151,7 @@ function LeadForm() {
                                 error={Boolean(formData.errors.owner)}
                             />
                             <TextField
+                                fullWidth
                                 id="outlined-multiline-flexible"
                                 label="Source"
                                 value={formData.values.source}
@@ -181,9 +167,16 @@ function LeadForm() {
                             </FormHelperText>
                         )
                     }
-                    <Button type="submit" disabled={mutation.isPending}>Create Lead</Button>
+                    <Box sx={{ py:3 }}>
+                        <Button
+                            type="submit"
+                            variant="contained"
+                        >
+                            {buttonText}
+                        </Button>
+                    </Box>
                 </form>
-            </Box>
+        </Paper>
         </>
     )
 }

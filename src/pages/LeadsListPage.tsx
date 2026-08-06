@@ -1,5 +1,5 @@
 import { useLeads } from '../features/leads/useLeads.ts'
-import { TableContainer, Table, TableBody, TableHead, TableRow, TableCell, Paper, TablePagination, TableFooter, TextField, FormControl, InputLabel, Select, MenuItem, type SelectChangeEvent, TableSortLabel, Button} from '@mui/material'
+import { TableContainer, Table, TableBody, TableHead, TableRow, TableCell, Paper, TablePagination, TableFooter, TextField, FormControl, InputLabel, Select, MenuItem, type SelectChangeEvent, TableSortLabel, Button, Box, Typography} from '@mui/material'
 import { useState, useEffect } from 'react'
 import DataState from '../components/DataState.tsx'
 import StatusChip from '../components/StatusChip.tsx'
@@ -28,7 +28,12 @@ type LeadResponse = {
     prev : number | null;
 }
 
-function LeadsListPage() {
+type Props = {
+    isDark : boolean,
+    setIsDark : React.Dispatch<React.SetStateAction<boolean>>;
+}
+
+function LeadsListPage({ isDark, setIsDark } : Props) {
 
     const [page, setPage] = useState(0);
     const [rowPerPage, setRowPerPage] = useState(10);
@@ -88,104 +93,130 @@ function LeadsListPage() {
 
     return (
         <>
-            <TextField
-                label = "Search"
-                value = {text}
-                onChange = {handleSearchChange}
-            />
-            <FormControl sx={{ minWidth: 120 }}>
-                <InputLabel>Status</InputLabel>
-                <Select
-                    value={status}
-                    onChange={handleStatusChange}
-                    label="Status"
-                >
-                    <MenuItem value="">All</MenuItem>
-                    <MenuItem value="New">New</MenuItem>
-                    <MenuItem value="Contacted">Contacted</MenuItem>
-                    <MenuItem value="Qualified">Qualified</MenuItem>
-                    <MenuItem value="Lost">Lost</MenuItem>
-                    <MenuItem value="Won">Won</MenuItem>
-                </Select>
-            </FormControl>
-            <Button onClick={() => navigate('/leads/new')} color='primary'> + Add Lead </Button>
-            <DataState
-                isLoading={query.isLoading}
-                isError={query.isError}
-                isEmpty={!query.isLoading &&
-                    !query.isError &&
-                    response?.data.length === 0}
-                refetch = {query.refetch}
-                emptyMessage={emptyMessage}
+        <Box sx={{mt:4}}>
+            <Typography variant='h2' align='center'>Leadboard</Typography>
+        </Box>
+            
+            <Box
+                sx={{
+                    display: 'flex',
+                    m: 2,
+                    justifyContent: 'space-evenly',
+                    alignItems: 'center',
+                    flexWrap: 'wrap',
+                    padding: 2
+                }}
             >
-                { response && (
-                    <TableContainer component={Paper} >
-                        <Table >
-                            <TableHead >
-                                <TableRow>
-                                    <TableCell>Id</TableCell>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={sortBy === 'first_name'}
-                                            direction={sortDirection}
-                                            onClick={() => handleSort('first_name')}
-                                        >
-                                            Name
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell>Email</TableCell>
-                                    <TableCell>Phone</TableCell>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={sortBy === 'status'}
-                                            direction={sortDirection}
-                                            onClick={() => handleSort('status')}
-                                        >
-                                            Status
-                                        </TableSortLabel>
-                                    </TableCell>
-                                    <TableCell>Owner</TableCell>
-                                    <TableCell>
-                                        <TableSortLabel
-                                            active={sortBy === 'created_on'}
-                                            direction={sortDirection}
-                                            onClick={() => handleSort('created_on')}
-                                        >
-                                            Created On
-                                        </TableSortLabel>
-                                    </TableCell>
-                                </TableRow>
-                            </TableHead>
-                            <TableBody >
-                                {response.data.map((row) => (
-                                    <TableRow key={row.id} onClick={() => { navigate(`/leads/${row.id}`);}} hover sx = {{cursor : 'pointer'}}>
-                                        <TableCell>{row.id}</TableCell>
-                                        <TableCell>{row.first_name} {row.last_name}</TableCell>
-                                        <TableCell>{row.email}</TableCell>
-                                        <TableCell>{row.phone}</TableCell>
-                                        <TableCell><StatusChip status={row.status}/></TableCell>
-                                        <TableCell>{row.owner}</TableCell>
-                                        <TableCell>{row.created_on}</TableCell>
-                                        <TableCell> <ConfirmDialog id={row.id} /></TableCell>
+                <TextField
+                    label = "Search"
+                    value = {text}
+                    onChange = {handleSearchChange}
+                />
+
+                <FormControl sx={{ minWidth: 120, my:2 }}>
+                    <InputLabel>Status</InputLabel>
+                    <Select
+                        value={status}
+                        onChange={handleStatusChange}
+                        label="Status"
+                    >
+                        <MenuItem value="">All</MenuItem>
+                        <MenuItem value="New">New</MenuItem>
+                        <MenuItem value="Contacted">Contacted</MenuItem>
+                        <MenuItem value="Qualified">Qualified</MenuItem>
+                        <MenuItem value="Lost">Lost</MenuItem>
+                        <MenuItem value="Won">Won</MenuItem>
+                    </Select>
+                </FormControl>
+
+                <Button onClick={() => navigate('/leads/new')} color='primary' size='large' variant='outlined' sx={{my:2}} > + Add Lead </Button>
+
+                <Button variant='outlined' onClick={() => setIsDark(!isDark)} >{isDark ? "☀️" : "🌙"}</Button>
+            </Box>
+            <Box
+                sx={{
+                    mx: 4
+                }}
+            >
+                <DataState
+                    isLoading={query.isLoading}
+                    isError={query.isError}
+                    isEmpty={!query.isLoading &&
+                        !query.isError &&
+                        response?.data.length === 0}
+                    refetch = {query.refetch}
+                    emptyMessage={emptyMessage}
+                >
+                    { response && (
+                        <TableContainer component={Paper} sx={{ overflow: "auto"}} >
+                            <Table >
+                                <TableHead >
+                                    <TableRow>
+                                        <TableCell>Id</TableCell>
+                                        <TableCell>
+                                            <TableSortLabel
+                                                active={sortBy === 'first_name'}
+                                                direction={sortDirection}
+                                                onClick={() => handleSort('first_name')}
+                                            >
+                                                Name
+                                            </TableSortLabel>
+                                        </TableCell>
+                                        <TableCell>Email</TableCell>
+                                        <TableCell>Phone</TableCell>
+                                        <TableCell>
+                                            <TableSortLabel
+                                                active={sortBy === 'status'}
+                                                direction={sortDirection}
+                                                onClick={() => handleSort('status')}
+                                            >
+                                                Status
+                                            </TableSortLabel>
+                                        </TableCell>
+                                        <TableCell>Owner</TableCell>
+                                        <TableCell>
+                                            <TableSortLabel
+                                                active={sortBy === 'created_on'}
+                                                direction={sortDirection}
+                                                onClick={() => handleSort('created_on')}
+                                            >
+                                                Created On
+                                            </TableSortLabel>
+                                        </TableCell>
+                                        <TableCell>Delete</TableCell>
                                     </TableRow>
-                                ))}
-                            </TableBody>
-                            <TableFooter>
-                                <TableRow>
-                                    <TablePagination
-                                        rowsPerPageOptions={[10, 25, 50]}
-                                        page={page}
-                                        rowsPerPage={rowPerPage}
-                                        onPageChange={handlePageChange}
-                                        onRowsPerPageChange={handleRowsPerPageChange}
-                                        count={response.items}
-                                    />
-                                </TableRow>
-                            </TableFooter>
-                        </Table>
-                    </TableContainer>
-                )}
-            </DataState>
+                                </TableHead>
+                                <TableBody >
+                                    {response.data.map((row) => (
+                                        <TableRow key={row.id} onClick={() => { navigate(`/leads/${row.id}`);}} hover sx = {{cursor : 'pointer'}}>
+                                            <TableCell>{row.id}</TableCell>
+                                            <TableCell>{row.first_name} {row.last_name}</TableCell>
+                                            <TableCell>{row.email}</TableCell>
+                                            <TableCell>{row.phone}</TableCell>
+                                            <TableCell><StatusChip status={row.status}/></TableCell>
+                                            <TableCell>{row.owner}</TableCell>
+                                            <TableCell>{row.created_on}</TableCell>
+                                            <TableCell> <ConfirmDialog id={row.id} /></TableCell>
+                                        </TableRow>
+                                    ))}
+                                </TableBody>
+                                <TableFooter>
+                                    <TableRow>
+                                        <TablePagination
+                                            rowsPerPageOptions={[10, 25, 50]}
+                                            page={page}
+                                            rowsPerPage={rowPerPage}
+                                            onPageChange={handlePageChange}
+                                            onRowsPerPageChange={handleRowsPerPageChange}
+                                            count={response.items}
+                                        />
+                                    </TableRow>
+                                </TableFooter>
+                            </Table>
+                        </TableContainer>
+                    )}
+                </DataState>
+            </Box>
         </>
     )
 }

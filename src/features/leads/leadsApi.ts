@@ -35,3 +35,7 @@ export const createLead = async (lead : LeadValues) => {
     const response = await api.post('/leads', lead);
     return response.data;
 }
+
+export const updateLead = ({id, lead} : {id : string, lead : LeadValues}) => {
+    return api.put(`/leads/${id}`, lead)
+}

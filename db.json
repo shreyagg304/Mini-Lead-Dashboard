@@ -419,26 +419,26 @@
       "created_on": "2025-11-04"
     },
     {
-      "first_name": "anita",
-      "last_name": "gupta",
-      "email": "anita@gmail.com",
-      "phone": "987863893",
+      "first_name": "rohan",
+      "last_name": "kaushik",
+      "email": "rohan@gmail.comm",
+      "phone": "899774374",
       "status": "New",
-      "owner": "ria",
+      "owner": "riya",
       "source": "web",
       "created_on": "2026-08-05",
-      "id": "czVlp9pY_mQ"
+      "id": "tn57HRuZEaA"
     },
     {
-      "first_name": "riya",
-      "last_name": "garg",
-      "email": "riya@gmail.com",
-      "phone": "86758767",
+      "first_name": "sfa",
+      "last_name": "fwsef",
+      "email": "saf@gag.fs",
+      "phone": "979778676",
       "status": "New",
-      "owner": "rohan",
-      "source": "web",
-      "created_on": "2026-08-05",
-      "id": "kkMg0XH-94E"
+      "owner": "jndyj",
+      "source": "eheh",
+      "created_on": "2026-08-06",
+      "id": "CeMBzms0nug"
     }
   ],
   "$schema": "./node_modules/json-server/schema.json"
